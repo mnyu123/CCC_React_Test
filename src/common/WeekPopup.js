@@ -6,7 +6,7 @@ import axios from "axios";
 
 const customStyles = {
   overlay: {
-    zIndex: 10, 
+    zIndex: 10,
   },
   content: {
     top: "50%",
@@ -17,7 +17,7 @@ const customStyles = {
     transform: "translate(-50%, -50%)",
     backgroundColor: "white",
     position: "fixed",
-    width: "400px", 
+    width: "400px",
   },
 };
 
@@ -27,6 +27,12 @@ const WeekPopup = ({ onClose }) => {
   const [isRemembered, setIsRemembered] = useState(false);
   const [book, setBook] = useState(null); // 책 정보를 저장할 상태
   const navigate = useNavigate();
+  const disableBodyScroll = () => {
+    document.body.style.overflow = "hidden";
+  };
+  const enableBodyScroll = () => {
+    document.body.style.overflow = "auto";
+  };
 
   useEffect(() => {
     // 페이지가 로드될 때 로그인 상태를 확인
@@ -35,44 +41,40 @@ const WeekPopup = ({ onClose }) => {
     // 로그인 상태가 true가 아닐 경우 로그인 페이지로 이동
     if (isLoggedIn !== "true") {
       navigate("/");
-    }
-    else{
+    } else {
+      disableBodyScroll(); // 모달이 열릴 때 실행
       axios
-      .get(`/api/aladin/1`, {
-        params: {
-          Query: "소설", // 검색어를 파라미터로 추가합니다.
-          QueryType: "Title", // 검색어 종류를 'Title'로 설정합니다.
-        },
-      })
-      .then((response) => {
-        setBook(response.data.item[0]); // 첫 번째 결과를 가져옵니다.
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+        .get(`/api/aladin/1`, {
+          params: {
+            Query: "소설", // 검색어를 파라미터로 추가합니다.
+            QueryType: "Title", // 검색어 종류를 'Title'로 설정합니다.
+          },
+        })
+        .then((response) => {
+          setBook(response.data.item[0]); // 첫 번째 결과를 가져옵니다.
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     }
     // 사용자가 '오늘 다시 보지 않음'을 선택했는지 확인
     const dontShowToday = localStorage.getItem("dontShowToday");
     if (dontShowToday === "true") {
-      onClose();
+      onclose();
     }
   }, []);
 
   const handleCheckboxChange = (e) => {
     setIsRemembered(e.target.checked);
+    if (e.target.checked) {
+      localStorage.setItem("dontShowToday", "true"); // 체크박스를 체크하면 '오늘 다시 보지 않음'을 저장
+      handleClose(); // 체크박스를 체크하면 팝업창을 닫습니다.
+    }
   };
 
-  const handleDontShowToday = () => {
-    localStorage.setItem("dontShowToday", "true"); // 오늘 다시 보지 않음을 저장
+  const handleClose = () => {
+    enableBodyScroll(); // 모달이 닫힐 때 실행
     onClose();
-  };
-
-  const disableBodyScroll = () => {
-    document.body.style.overflow = 'hidden';
-  };
-
-  const enableBodyScroll = () => {
-    document.body.style.overflow = 'auto';
   };
 
   return (
@@ -89,13 +91,13 @@ const WeekPopup = ({ onClose }) => {
         <div className="week-book">
           <h4>이번주의 책</h4>
         </div>
-        <span className="close" onClick={onClose}>
+        <span className="close" onClick={handleClose}>
           &times;
         </span>
       </div>
       <hr />
       <div className="book">
-      {book && (
+        {book && (
           <>
             <div className="book-cover_w">
               <img src={book.cover} alt={book.title} />
